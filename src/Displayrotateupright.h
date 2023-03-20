@@ -1,8 +1,11 @@
 /**
  * @file Displayrotateupright.h
  *
- * @brief
+ * @brief TODO
+ *
  */
+
+#pragma once
 
 #if (OLED_DISPLAY == 1 || OLED_DISPLAY == 2)
 /**
@@ -46,7 +49,7 @@ void displayLogo(String displaymessagetext, String displaymessagetext2) {
     u8g2.drawStr(0, 47, displaymessagetext.c_str());
     u8g2.drawStr(0, 55, displaymessagetext2.c_str());
 
-    //Rancilio startup logo
+    // Rancilio startup logo
     switch (machineLogo) {
         case 1:
             u8g2.drawXBMP(9, 2, startLogoRancilio_width, startLogoRancilio_height, startLogoRancilio_bits);
@@ -73,7 +76,7 @@ void displayEmergencyStop(void)
     u8g2.clearBuffer();
     u8g2.setCursor(1, 34);
     u8g2.print(langstring_current_temp_rot_ur);
-    u8g2.print(Input, 1);
+    u8g2.print(temperature, 1);
     u8g2.print(" ");
     u8g2.print((char)176);
     u8g2.print("C");
@@ -99,29 +102,27 @@ void displayEmergencyStop(void)
 /**
  * @brief display shot timer
  */
-void displayShottimer(void)
- {
-    if (((brewTime > 0 && ONLYPID == 1) || // brewTime bei Only PID
-        (ONLYPID == 0 && brewcounter > 10 && brewcounter <= 42)) // oder Bezug bei nicht only PID über brewcounter
-        && SHOTTIMER == 1) // Shotimer muss 1 = True sein und Bezug vorliegen
+void displayShottimer(void) {
+    if (((timeBrewed > 0 && ONLYPID == 1) ||
+        (ONLYPID == 0 && brewcounter > kBrewIdle && brewcounter <= kBrewFinished))
+        && SHOTTIMER == 1)
     {
-        // Dann Zeit anzeigen
         u8g2.clearBuffer();
 
         // draw temp icon
         u8g2.drawXBMP(0, 0, brewlogo_width, brewlogo_height, brewlogo_bits_u8g2);
         u8g2.setFont(u8g2_font_profont22_tf);
         u8g2.setCursor(5, 70);
-        u8g2.print(brewTime / 1000, 1);
+        u8g2.print(timeBrewed / 1000, 1);
         u8g2.setFont(u8g2_font_profont11_tf);
         u8g2.sendBuffer();
 
     }
-    if (SHOTTIMER == 1 && millis() >= brewTime_last_Millis && // direkt nach Erstellen von brewTime_last_mills (passiert beim ausschalten des Brühschalters, case 43 im Code) soll gestartet werden
-        brewTime_last_Millis+brewswitchDelay >= millis() && // soll solange laufen, bis millis() den brewswitchDelay aufgeholt hat, damit kann die Anzeigedauer gesteuert werden
-        brewTime_last_Millis < totalbrewtime) // wenn die totalbrewtime automatisch erreicht wird, soll nichts gemacht werden, da sonst falsche Zeit angezeigt wird, da Schalter später betätigt wird als totalbrewtime
+    if (SHOTTIMER == 1 && millis() >= brewTime_last_Millis && // directly after creating brewTime_last_mills (happens when turning off the brew switch, case 43 in the code) should be started
+        brewTime_last_Millis+brewswitchDelay >= millis() && // should run until millis() has caught up with brewswitchDelay, this can be used to control the display duration
+        brewTime_last_Millis < totalBrewTime) // if the totalBrewTime is reached automatically, nothing should be done, otherwise wrong time will be displayed because switch is pressed later than totalBrewTime
     {
-    u8g2.clearBuffer();
+        u8g2.clearBuffer();
         u8g2.drawXBMP(0, 0, brewlogo_width, brewlogo_height, brewlogo_bits_u8g2);
         u8g2.setFont(u8g2_font_profont22_tf);
         u8g2.setCursor(5, 70);

@@ -1,10 +1,13 @@
 /**
  * @file display.h
  *
- * @brief
+ * @brief TODO
  */
 
-#if (OLED_DISPLAY == 1 || OLED_DISPLAY == 2)
+#pragma once
+
+#if (OLED_DISPLAY != 0)
+
 
 /**
  * @brief initialize display
@@ -17,6 +20,7 @@ void u8g2_prepare(void) {
     u8g2.setFontDirection(0);
     u8g2.setDisplayRotation(DISPLAYROTATE);
 }
+
 
 /**
  * @brief print message
@@ -37,6 +41,7 @@ void displayMessage(String text1, String text2, String text3, String text4, Stri
     u8g2.print(text6);
     u8g2.sendBuffer();
 }
+
 
 /**
  * @brief print logo and message at boot
@@ -89,24 +94,23 @@ void displayDistance(int display_distance) {
  * @brief display shot timer
  */
 void displayShottimer(void) {
-    if ((machinestate == kBrew) && SHOTTIMER == 1) { // Shotimer muss 1 = True sein und Bezug vorliegen
-        // Dann Zeit anzeigen
+    if ((machineState == kBrew) && SHOTTIMER == 1) { // Shotimer has to be 1 and brew is running, then show time
         u8g2.clearBuffer();
 
         // temp icon
         u8g2.drawXBMP(0, 0, brewlogo_width, brewlogo_height, brewlogo_bits_u8g2);
         u8g2.setFont(u8g2_font_profont22_tf);
         u8g2.setCursor(64, 25);
-        u8g2.print(brewTime / 1000, 1);
+        u8g2.print(timeBrewed / 1000, 1);
         u8g2.setFont(u8g2_font_profont11_tf);
         u8g2.sendBuffer();
     }
 
-    /* wenn die totalbrewtime automatisch erreicht wird,
-     * soll nichts gemacht werden, da sonst falsche Zeit angezeigt
-     * wird, da Schalter später betätigt wird als totalbrewtime
+    /* if the totalBrewTime is reached automatically,
+     * nothing should be done, otherwise wrong time is displayed
+     * because the switch is pressed later than totalBrewTime
      */
-    if (((machinestate == kShotTimerAfterBrew) && SHOTTIMER == 1)) {
+    if (((machineState == kShotTimerAfterBrew) && SHOTTIMER == 1)) {
         u8g2.clearBuffer();
         u8g2.drawXBMP(0, 0, brewlogo_width, brewlogo_height, brewlogo_bits_u8g2);
         u8g2.setFont(u8g2_font_profont22_tf);
@@ -117,16 +121,14 @@ void displayShottimer(void) {
     }
 
     #if (ONLYPIDSCALE == 1 || BREWMODE == 2)
-        // Shotimer muss 2 sein und Bezug vorliegen
-        if ((machinestate == kBrew) && SHOTTIMER == 2) {
-            // Dann Zeit anzeigen
+        if ((machineState == kBrew) && SHOTTIMER == 2) {
             u8g2.clearBuffer();
 
             // temp icon
             u8g2.drawXBMP(0, 0, brewlogo_width, brewlogo_height, brewlogo_bits_u8g2);
             u8g2.setFont(u8g2_font_profont22_tf);
             u8g2.setCursor(64, 15);
-            u8g2.print(brewTime / 1000, 1);
+            u8g2.print(timeBrewed / 1000, 1);
             u8g2.print("s");
             u8g2.setCursor(64, 38);
             u8g2.print(weightBrew, 0);
@@ -135,7 +137,7 @@ void displayShottimer(void) {
             u8g2.sendBuffer();
         }
 
-        if (((machinestate == kShotTimerAfterBrew) && SHOTTIMER == 2)) {
+        if (((machineState == kShotTimerAfterBrew) && SHOTTIMER == 2)) {
             u8g2.clearBuffer();
             u8g2.drawXBMP(0, 0, brewlogo_width, brewlogo_height, brewlogo_bits_u8g2);
             u8g2.setFont(u8g2_font_profont22_tf);
@@ -151,12 +153,13 @@ void displayShottimer(void) {
     #endif
 }
 
+
 /**
  * @brief display heating logo
  */
 void Displaymachinestate() {
-    if (HEATINGLOGO > 0 && (machinestate == kInit || machinestate == kColdStart)) {
-        // Für Statusinfos
+    if (HEATINGLOGO > 0 && (machineState == kInit || machineState == kColdStart)) {
+        // For status info
         u8g2.clearBuffer();
         u8g2.drawFrame(8, 0, 110, 12);
 
@@ -166,37 +169,29 @@ void Displaymachinestate() {
             if (WiFi.status() == WL_CONNECTED) {
                 u8g2.drawXBMP(40, 2, 8, 8, antenna_OK_u8g2);
 
-                for (int b = 0; b <= bars; b++) {
+                for (int b = 0; b <= signalBars; b++) {
                     u8g2.drawVLine(45 + (b * 2), 10 - (b * 2), b * 2);
                 }
             } else {
                 u8g2.drawXBMP(40, 2, 8, 8, antenna_NOK_u8g2);
-                u8g2.setCursor(88, 2);
+                u8g2.setCursor(88, 1);
                 u8g2.print("RC: ");
                 u8g2.print(wifiReconnects);
             }
 
-            if (BLYNK == 1) {
-                if (Blynk.connected()) {
-                    u8g2.drawXBMP(60, 2, 11, 8, blynk_OK_u8g2);
-                } else {
-                    u8g2.drawXBMP(60, 2, 8, 8, blynk_NOK_u8g2);
-                }
-            }
-
             if (MQTT == 1) {
                 if (mqtt.connected() == 1) {
-                    u8g2.setCursor(77, 1);
+                    u8g2.setCursor(60, 1);
                     u8g2.setFont(u8g2_font_profont11_tf);
                     u8g2.print("MQTT");
                 } else {
-                    u8g2.setCursor(77, 2);
+                    u8g2.setCursor(60, 2);
                     u8g2.print("");
                 }
             }
         } else {
-            u8g2.setCursor(40, 2);
-            u8g2.print(langstring_offlinemod);
+            u8g2.setCursor(40, 1);
+            u8g2.print(langstring_offlinemode);
         }
 
         // Rancilio logo
@@ -216,12 +211,12 @@ void Displaymachinestate() {
         // Temperature
         u8g2.setCursor(92, 30);
         u8g2.setFont(u8g2_font_profont17_tf);
-        u8g2.print(Input, 1);
+        u8g2.print(temperature, 1);
         u8g2.sendBuffer();
     }
 
     // Offline logo
-    if (OFFLINEGLOGO == 1 && machinestate == kPidOffline) {
+    if (OFFLINEGLOGO == 1 && machineState == kPidOffline) {
         u8g2.clearBuffer();
         u8g2.drawXBMP(38, 0, OFFLogo_width, OFFLogo_height, OFFLogo);
         u8g2.setCursor(0, 55);
@@ -231,18 +226,18 @@ void Displaymachinestate() {
     }
 
     // Steam
-    if (machinestate == kSteam) {
+    if (machineState == kSteam) {
         u8g2.clearBuffer();
         u8g2.drawXBMP(0, 0, steamlogo_width, steamlogo_height, steamlogo);
         u8g2.setCursor(64, 25);
         u8g2.setFont(u8g2_font_profont22_tf);
-        u8g2.print(Input, 0);
+        u8g2.print(temperature, 0);
         u8g2.setCursor(64, 25);
         u8g2.sendBuffer();
     }
 
     // Backflush
-    if (machinestate == kBackflush) {
+    if (machineState == kBackflush) {
         u8g2.setFont(u8g2_font_profont11_tf);
         if (backflushState == 43) {
             #if OLED_DISPLAY != 0
@@ -260,19 +255,19 @@ void Displaymachinestate() {
     }
 
     // PID Off Logo
-    if (machinestate == kEmergencyStop) {
+    if (machineState == kEmergencyStop) {
         u8g2.clearBuffer();
         u8g2.setFont(u8g2_font_profont11_tf);
         u8g2.drawXBMP(0, 0, logo_width, logo_height, logo_bits_u8g2);  // draw temp icon
         u8g2.setCursor(32, 24);
         u8g2.print("Ist :  ");
-        u8g2.print(Input, 1);
+        u8g2.print(temperature, 1);
         u8g2.print(" ");
         u8g2.print((char)176);
         u8g2.print("C");
         u8g2.setCursor(32, 34);
         u8g2.print("Soll:  ");
-        u8g2.print(setPoint, 1);
+        u8g2.print(setpoint, 1);
         u8g2.print(" ");
         u8g2.print((char)176);
         u8g2.print("C");
@@ -291,15 +286,13 @@ void Displaymachinestate() {
         u8g2.sendBuffer();
     }
 
-    // Sensor error
-    if (machinestate == kSensorError) {
+    if (machineState == kSensorError) {
         u8g2.clearBuffer();
         u8g2.setFont(u8g2_font_profont11_tf);
-        displayMessage(langstring_error_tsensor[0], String(Input), langstring_error_tsensor[1], "", "", "");
+        displayMessage(langstring_error_tsensor[0], String(temperature), langstring_error_tsensor[1], "", "", "");
     }
 
-    // EEPROM error
-    if (machinestate == keepromError) {
+    if (machineState == kEepromError) {
         u8g2.clearBuffer();
         u8g2.setFont(u8g2_font_profont11_tf);
         displayMessage("EEPROM Error, please set Values", "", "", "", "", "");
